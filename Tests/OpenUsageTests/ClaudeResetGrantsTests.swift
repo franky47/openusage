@@ -65,6 +65,13 @@ final class ClaudeResetGrantsTests: XCTestCase {
         XCTAssertNil(ClaudeResetGrantStatus.parse(["eligible": true, "grants": [["id": "g", "resets_left": 1e300]]]))
     }
 
+    /// A count that large would build an expiry list too big to allocate, or overflow the total.
+    func testAnImplausibleGrantCountDropsTheBlock() {
+        let endsAt = "2099-01-01T00:00:00Z"
+        XCTAssertNil(ClaudeResetGrantStatus.parse(["eligible": true, "grants": [["id": "g", "resets_left": 2e18, "ends_at": endsAt]]]))
+        XCTAssertNotNil(ClaudeResetGrantStatus.parse(["eligible": true, "grants": [["id": "g", "resets_left": 1000, "ends_at": endsAt]]]))
+    }
+
     func testResetGrantsRequestMatchesClaudeCode() {
         let url = ClaudeUsageClient.resetGrantsURL(URL(string: "https://api.anthropic.com/api/oauth/usage")!)
         XCTAssertEqual(url.absoluteString, "https://api.anthropic.com/api/oauth/usage?cedar_ember=1&skip_spend=1")

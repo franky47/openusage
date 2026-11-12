@@ -16,13 +16,18 @@ struct ClaudeResetGrantStatus: Equatable, Sendable {
 
     /// `nil` for a missing or `null` block (plans outside the program) and for a block with a malformed
     /// grant: like Claude Code, a block we can't fully read is rejected rather than half-trusted.
+    /// Anthropic grants one or two resets at a time. A count far beyond that is malformed, and would
+    /// build an expiry list too big to allocate.
+    static let maxResetsPerGrant = 1000
+
     static func parse(_ value: Any?) -> ClaudeResetGrantStatus? {
         guard let object = value as? [String: Any] else { return nil }
         var grants: [Grant] = []
         for entry in object["grants"] as? [Any] ?? [] {
             guard let grant = entry as? [String: Any],
                   let id = grant["id"] as? String, !id.isEmpty,
-                  let left = ProviderParse.number(grant["resets_left"]).flatMap({ ProviderParse.int($0.rounded(.down)) })
+                  let left = ProviderParse.number(grant["resets_left"]).flatMap({ ProviderParse.int($0.rounded(.down)) }),
+                  left <= Self.maxResetsPerGrant
             else {
                 AppLog.warn(LogTag.plugin("claude"), "reset grants block has a malformed grant; ignoring the block")
                 return nil
