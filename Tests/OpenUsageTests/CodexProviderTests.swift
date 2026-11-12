@@ -59,6 +59,18 @@ final class CodexAuthStoreTests: XCTestCase {
 }
 
 final class CodexUsageMapperTests: XCTestCase {
+    func testDropsWindowLengthCountAndCreditsTooLargeForAnInt() throws {
+        let body = Data(#"""
+        {"rate_limit":{"primary_window":{"used_percent":42,"limit_window_seconds":1e300}},
+         "rate_limit_reset_credits":{"available_count":1e300},"credits":{"balance":1e300}}
+        """#.utf8)
+        let mapped = try CodexUsageMapper.mapUsageResponse(HTTPResponse(statusCode: 200, headers: [:], body: body))
+
+        XCTAssertEqual(mapped.lines.map(\.label), ["Session"])
+        guard case .progress(_, _, _, _, _, let periodMs, _) = mapped.lines.first else { return XCTFail("expected Session meter") }
+        XCTAssertEqual(periodMs, MetricPeriod.sessionMs)
+    }
+
     func testFreshSessionWindowPreservesOnePercentAndDefaultsMissingPeriod() throws {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let resetAfterSeconds = CodexUsageMapper.sessionPeriodMs / 1000

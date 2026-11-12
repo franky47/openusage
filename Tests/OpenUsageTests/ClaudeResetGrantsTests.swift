@@ -61,6 +61,10 @@ final class ClaudeResetGrantsTests: XCTestCase {
         XCTAssertNil(try resetsLine(#"{"five_hour":{"utilization":3}}"#))
     }
 
+    func testAGrantCountTooLargeForAnIntDropsTheBlock() {
+        XCTAssertNil(ClaudeResetGrantStatus.parse(["eligible": true, "grants": [["id": "g", "resets_left": 1e300]]]))
+    }
+
     func testResetGrantsRequestMatchesClaudeCode() {
         let url = ClaudeUsageClient.resetGrantsURL(URL(string: "https://api.anthropic.com/api/oauth/usage")!)
         XCTAssertEqual(url.absoluteString, "https://api.anthropic.com/api/oauth/usage?cedar_ember=1&skip_spend=1")

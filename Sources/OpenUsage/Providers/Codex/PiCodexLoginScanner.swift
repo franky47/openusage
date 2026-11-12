@@ -117,7 +117,7 @@ struct PiCodexLoginScanner: Sendable {
         var labels: [String: String] = [:]
         for subscription in subscriptions {
             guard subscription["provider"] as? String == Self.providerPrefix,
-                  let index = ProviderParse.number(subscription["index"]).map({ Int($0) }),
+                  let index = ProviderParse.number(subscription["index"]).flatMap(ProviderParse.int),
                   let label = (subscription["label"] as? String)?
                     .trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
             else { continue }

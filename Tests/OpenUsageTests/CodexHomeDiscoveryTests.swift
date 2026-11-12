@@ -92,6 +92,17 @@ final class CodexHomeDiscoveryTests: XCTestCase {
         XCTAssertEqual(Set(scan.logins.map(\.authPath)), ["/Users/dev/.pi/agent/auth.json"])
     }
 
+    func testPiDiscoveryIgnoresASubscriptionIndexTooLargeForAnInt() {
+        let files = FakeFiles([
+            "/Users/dev/.pi/agent/auth.json": Fixtures.piAuth([("openai-codex", "ACCT-HOME", "me@home.test")]),
+            "/Users/dev/.pi/agent/multi-pass.json": #"{"subscriptions":[{"provider":"openai-codex","index":1e300,"label":"huge"}]}"#,
+        ])
+
+        let scan = piScanner(files: files).scan()
+
+        XCTAssertEqual(scan.logins.map(\.label), [nil])
+    }
+
     func testPiDiscoverySkipsLoginsThatCannotNameTheirAccount() {
         let files = FakeFiles([
             "/Users/dev/.pi/agent/auth.json": Fixtures.piAuth([
