@@ -154,7 +154,7 @@ enum LocalUsageAPI {
                 try container.encode(label, forKey: .label)
                 try container.encode(used, forKey: .used)
                 try container.encode(limit, forKey: .limit)
-                try container.encode(format, forKey: .format)      // {"kind": ...} (+ "suffix" for counts)
+                try container.encode(format, forKey: .format)      // {"kind": ...} (+ "suffix" for counts, "code" for currency)
                 try container.encodeIfPresent(resetsAt.map(OpenUsageISO8601.string(from:)), forKey: .resetsAt)
                 try container.encodeIfPresent(periodDurationMs, forKey: .periodDurationMs)
                 try container.encode(color, forKey: .color)

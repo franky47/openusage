@@ -138,7 +138,7 @@ it. It is omitted when unavailable, including on older endpoints and accounts wi
       "label": "Session",
       "used": 42.0,
       "limit": 100.0,
-      "format": { "kind": "percent" },          // or "dollars", or "count" (+ "suffix")
+      "format": { "kind": "percent" },          // or "dollars", "currency" (+ "code", e.g. "EUR"), or "count" (+ "suffix")
       "resetsAt": "2026-03-26T13:00:00.161Z",   // optional
       "periodDurationMs": 18000000,             // optional
       "color": null
