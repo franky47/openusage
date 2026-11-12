@@ -244,6 +244,10 @@ final class ResetDisplayTests: XCTestCase {
         XCTAssertEqual(Formatters.compactDuration(52 * 60), "52m")
     }
 
+    func testCompactDurationOfAResetTooFarOffForAnIntShowsTheLongestCountdown() {
+        XCTAssertEqual(Formatters.compactDuration(1e300), "6405119470038038d 18h")
+    }
+
     func testResetsPopoverContentResolvesEmptyCountOnlyAndTimeline() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
 
