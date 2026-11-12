@@ -119,6 +119,9 @@ enum ClaudeUsageMapper {
         return .text(label: "Note", value: noteText)
     }
 
+    /// Waits cap at an hour so a huge header can't overflow the countdown.
+    static let maxRetryAfterSeconds = 3600
+
     static func parseRetryAfterSeconds(_ response: HTTPResponse, now: Date = Date()) -> Int? {
         guard let raw = response.header("retry-after")?.trimmingCharacters(in: .whitespacesAndNewlines),
               !raw.isEmpty
@@ -126,10 +129,10 @@ enum ClaudeUsageMapper {
             return nil
         }
         if let seconds = Int(raw), seconds >= 0 {
-            return seconds
+            return min(seconds, maxRetryAfterSeconds)
         }
         if let date = HTTPDateFormatter.date(from: raw) {
-            return max(0, Int(ceil(date.timeIntervalSince(now))))
+            return min(max(0, Int(ceil(date.timeIntervalSince(now)))), maxRetryAfterSeconds)
         }
         return nil
     }
