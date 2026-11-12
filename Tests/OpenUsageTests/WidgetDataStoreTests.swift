@@ -425,6 +425,36 @@ final class WidgetDataStoreTests: XCTestCase {
         XCTAssertEqual(used.menuBarValue, remaining.menuBarValue)
     }
 
+    func testClaudesCappedExtraUsageReadsInTheBillingCurrency() async {
+        let provider = Provider(id: "claude", displayName: "Claude", icon: .providerMark("claude"))
+        let descriptor = WidgetDescriptor.boundedDollars(
+            id: "claude.extra", provider: provider, title: "Extra Usage",
+            metricLabel: "Extra usage spent", limit: 100, valueWord: "spent"
+        )
+        let runtime = TestProviderRuntime(
+            provider: provider,
+            descriptors: [descriptor],
+            snapshot: ProviderSnapshot(
+                providerID: provider.id,
+                displayName: provider.displayName,
+                lines: [.progress(label: "Extra usage spent", used: 12.34, limit: 50, format: .currency(code: "EUR"))]
+            )
+        )
+        let defaults = makeUserDefaults("claude-extra-eur")
+        let store = WidgetDataStore(
+            registry: WidgetRegistry(providers: [provider], descriptors: [descriptor]),
+            providers: [runtime],
+            cache: ProviderSnapshotCache(userDefaults: defaults, storageKey: "snapshots", ttl: 600, now: { Date() }),
+            defaults: defaults
+        )
+        await store.refreshAll()
+
+        let data = store.data(for: descriptor)
+        XCTAssertEqual(data.currencyCode, "EUR")
+        XCTAssertEqual(data.menuBarValue, "€38")   // the default mode shows what is left
+        XCTAssertEqual(data.boundedSubtitle, "€50 limit")
+    }
+
     func testUncappedExtraUsageRendersCompactAndUnbounded() async {
         // Regression (#658): Claude's `claude.extra` is a `boundedDollars` descriptor (a meter when the
         // provider reports a monthly cap), but an uncapped spend arrives as a `.values` line. It must
