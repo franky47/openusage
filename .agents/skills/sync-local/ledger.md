@@ -12,6 +12,7 @@ Reviewed up to: `35e88e93` (upstream main, 2026-11-11)
 | `e8729655` | Open a Copilot organization's billing page from its account menu | skip | account UI |
 | `28ffb97a` | fix(oauth): send a random state, never the PKCE verifier (#1460) | skip | sign-in flow; `local` does not sign in |
 | `f9bb8bbc` | fix(oauth): treat only a refused token renewal as an expired sign-in (#1461) | skip | `local` already sorts renewal errors |
+| `9d704d4f` | fix(refresh): cap Retry-After waits at an hour (#1505) | port | 136f8b78 (Claude's Retry-After parser) |
 | `520caec7` | fix(http): stop caching provider responses (#1486) | port | 45471c20 |
 | `dd94b651` | fix(claude): show Max and Ultra plan names (#1499) | port | 48e3f76c |
 | `e504a1c9` | fix(auth): keep renewed tokens when the Keychain write fails (#1515) | skip | account runtime only |
@@ -33,3 +34,11 @@ Reviewed up to: `35e88e93` (upstream main, 2026-11-11)
 | `ea46fc61` | fix(claude): ask for user:inference so Use can spend a reset (#1652) | skip | sign-in scopes |
 | `cbb3bf74` | fix(claude): retry a reset-grants read that fails before the first answer (#1664) | skip | read scheduling in the rewrite; the request is unchanged |
 | `647ff126` | fix(claude): read reset grants with usage and keep their kinds in the cache (#1666) | skip | read scheduling in the rewrite; the request is unchanged |
+
+## Local-only fixes
+
+Fixes with no upstream commit. Check upstream for its own fix at each sync.
+
+| Local commit | Subject |
+|---|---|
+| `68f8ee2e` | fix(claude): drop a reset-grants block with an implausible count |
