@@ -27,6 +27,18 @@ struct CopilotMappedUsage: Equatable, Sendable {
 enum CopilotUsageMapper {
     static let periodMs = MetricPeriod.monthMs
 
+    /// GitHub sends some rate limits as 403 with `x-ratelimit-remaining: 0` or `retry-after`,
+    /// so only a plain 401 or 403 means the token is bad.
+    static func failure(for response: HTTPResponse) -> Error? {
+        let status = response.statusCode
+        if (200..<300).contains(status) { return nil }
+        let rateLimited = status == 429
+            || (status == 403 && (response.header("x-ratelimit-remaining") == "0" || response.header("retry-after") != nil))
+        if rateLimited { return CopilotUsageError.rateLimited }
+        if status == 401 || status == 403 { return CopilotAuthError.tokenInvalid }
+        return CopilotUsageError.requestFailed(status)
+    }
+
     static func map(_ response: HTTPResponse) throws -> CopilotMappedUsage {
         guard let body = ProviderParse.jsonObject(response.body) else {
             throw CopilotUsageError.invalidResponse
@@ -215,10 +227,13 @@ enum CopilotUsageError: Error, LocalizedError, Equatable {
     case invalidResponse
     case connectionFailed
     case requestFailed(Int)
+    case rateLimited
     case quotaUnavailable
 
     var errorDescription: String? {
         switch self {
+        case .rateLimited:
+            return "GitHub is rate-limiting Copilot usage requests. Try again later."
         case .invalidResponse:
             return "Copilot usage response invalid. Try again later."
         case .connectionFailed:
