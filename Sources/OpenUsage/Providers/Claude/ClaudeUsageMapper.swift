@@ -210,23 +210,26 @@ enum ClaudeUsageMapper {
     private static func appendExtraUsage(_ value: Any?, to lines: inout [MetricLine]) {
         guard let object = value as? [String: Any],
               object["is_enabled"] as? Bool == true,
-              let usedCents = ProviderParse.number(object["used_credits"])
+              let usedMinor = ProviderParse.number(object["used_credits"])
         else {
             return
         }
 
-        let used = ProviderParse.centsToDollars(usedCents)
-        if let limitCents = ProviderParse.number(object["monthly_limit"]), limitCents > 0 {
+        // Amounts arrive in the billing currency's minor units (cents for USD and EUR, none for JPY).
+        let currency = (object["currency"] as? String).flatMap { $0 == "USD" ? nil : $0 }
+        let minorUnits = pow(10, ProviderParse.number(object["decimal_places"]) ?? 2)
+        let used = usedMinor.rounded() / minorUnits
+        if let limitMinor = ProviderParse.number(object["monthly_limit"]), limitMinor > 0 {
             lines.append(.progress(
                 label: "Extra usage spent",
                 used: used,
-                limit: ProviderParse.centsToDollars(limitCents),
-                format: .dollars
+                limit: limitMinor.rounded() / minorUnits,
+                format: currency.map { .currency(code: $0) } ?? .dollars
             ))
         } else if used > 0 {
             // No monthly cap: an unbounded spend, carried raw so it formats through `MetricFormatter`
             // (compact like the spend tiles, e.g. "$1.2K spent") instead of a baked full-currency string.
-            lines.append(.values(label: "Extra usage spent", values: [MetricValue(number: used, kind: .dollars)]))
+            lines.append(.values(label: "Extra usage spent", values: [MetricValue(number: used, kind: .dollars, currencyCode: currency)]))
         }
     }
 

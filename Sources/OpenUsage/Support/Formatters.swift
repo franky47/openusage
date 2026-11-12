@@ -3,11 +3,13 @@ import Foundation
 /// Shared display formatters for live usage data: the mode-aware deadline/reset phrasing
 /// (`deadlineLabel`, `resetRelativeLabel`, `resetAbsoluteLabel`), compact durations, and USD currency.
 enum Formatters {
-    static func currency(_ amount: Double, fractionDigits: Int = 2) -> String {
+    /// `fractionDigits` defaults to the currency's own minor units (2 for USD and EUR, 0 for JPY).
+    static func currency(_ amount: Double, fractionDigits: Int? = nil, code: String = "USD") -> String {
         let f = NumberFormatter()
         f.numberStyle = .currency
-        f.currencyCode = "USD"
+        f.currencyCode = code
         f.locale = Locale(identifier: "en_US")
+        let fractionDigits = fractionDigits ?? f.maximumFractionDigits
         f.maximumFractionDigits = fractionDigits
         f.minimumFractionDigits = fractionDigits
         // The fallback must also respect the requested precision: a raw "$\(amount)" would leak the

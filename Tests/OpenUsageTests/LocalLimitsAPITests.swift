@@ -146,6 +146,23 @@ final class LocalLimitsAPITests: XCTestCase {
         XCTAssertNil(resource["utilization"])
     }
 
+    func testClaudeExtraUsageExportsItsBillingCurrencyAsTheUnit() throws {
+        let provider = Provider(id: "claude", displayName: "Claude", icon: .providerMark("claude"))
+        let extra = WidgetDescriptor.boundedDollars(
+            id: "claude.extra", provider: provider, title: "Extra Usage",
+            metricLabel: "Extra usage spent", limit: 100
+        ).exportingLimit("extraUsage", unit: "usd", source: .progressOrValue(kind: .dollars))
+        func unit(_ line: MetricLine) throws -> String? {
+            let snapshot = ProviderSnapshot(providerID: "claude", displayName: "Claude", lines: [line], refreshedAt: fetchedAt)
+            return try limitResource("extraUsage", snapshot: snapshot, descriptors: [extra])["unit"] as? String
+        }
+
+        XCTAssertEqual(try unit(.progress(label: "Extra usage spent", used: 12.34, limit: 50, format: .currency(code: "EUR"))), "eur")
+        XCTAssertEqual(try unit(.values(label: "Extra usage spent",
+                                        values: [MetricValue(number: 15, kind: .dollars, currencyCode: "EUR")])), "eur")
+        XCTAssertEqual(try unit(.values(label: "Extra usage spent", values: [MetricValue(number: 15, kind: .dollars)])), "usd")
+    }
+
     @MainActor
     func testCopilotPremiumCreditsExportsPersonalCountAndPaidPercent() throws {
         let credits = CopilotProvider().widgetDescriptors.first { $0.id == "copilot.premium" }!

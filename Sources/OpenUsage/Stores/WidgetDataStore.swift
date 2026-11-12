@@ -657,6 +657,7 @@ final class WidgetDataStore {
                 title: descriptor.sample.title,
                 icon: descriptor.sample.icon,
                 kind: format.metricKind,
+                currencyCode: format.currencyCode,
                 used: normalizedUsed,
                 limit: limit,
                 countSuffix: format.countSuffix,

@@ -22,7 +22,8 @@ enum MetricFormatter {
     private static let locale = Locale(identifier: "en_US")
 
     /// A bare number in the given kind and style (no unit label).
-    static func number(_ value: Double, kind: MetricKind, style: Style) -> String {
+    /// `currencyCode` (ISO 4217) applies to `.dollars` only; `nil` means USD.
+    static func number(_ value: Double, kind: MetricKind, style: Style, currencyCode: String? = nil) -> String {
         switch kind {
         case .percent:
             // Percent is a bounded 0...100 domain, so clamp defensively: a bad sample (a provider
@@ -31,18 +32,20 @@ enum MetricFormatter {
             // and color (see `WidgetData.meterState`), not by an out-of-range headline number.
             return "\(Int(ProviderParse.clampPercent(value).rounded()))%"
         case .dollars:
+            let code = currencyCode ?? "USD"
+            let symbol = Locale(identifier: "en_US@currency=\(code)").currencySymbol ?? code
             // Tray and row abbreviate four figures and up ("$1.2M", "$2.1K") so neither carries
             // "$2,059.07"; the full form (tooltips/headlines) always keeps grouped cents.
             if abs(value) >= 1000, style != .full {
-                return "$" + value.formatted(.number.notation(.compactName).precision(.fractionLength(0...1)).locale(locale))
+                return symbol + value.formatted(.number.notation(.compactName).precision(.fractionLength(0...1)).locale(locale))
             }
             switch style {
             case .tray:
                 // Shortest below $1k: whole dollars ("$130").
-                return "$" + value.formatted(.number.precision(.fractionLength(0)).locale(locale))
+                return symbol + value.formatted(.number.precision(.fractionLength(0)).locale(locale))
             case .row, .full:
                 // Full cents below $1k; the row's token-count neighbor stays readable.
-                return Formatters.currency(value, fractionDigits: 2)
+                return Formatters.currency(value, code: code)
             }
         case .count:
             // Tray and row abbreviate at the thousands (token counts run into the billions); the full
@@ -58,7 +61,7 @@ enum MetricFormatter {
     /// A value with its unit label appended, e.g. "772 credits". Token, dollar, and percent values
     /// carry no label and render bare ("56.9M", "$4.08", "95%") — those rows show no unit, by design.
     static func string(for value: MetricValue, style: Style) -> String {
-        let text = number(value.number, kind: value.kind, style: style)
+        let text = number(value.number, kind: value.kind, style: style, currencyCode: value.currencyCode)
         guard let label = value.label, !label.isEmpty else { return text }
         return "\(text) \(label)"
     }
