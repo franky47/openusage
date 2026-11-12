@@ -103,7 +103,9 @@ body that explains why, and the upstream source on the last line, for example `P
 No co-author lines. Never amend.
 
 Then update `ledger.md`: move "Reviewed up to" to the newest upstream commit you classified, and
-add one row for each commit with its decision. Commit the ledger as `chore: record upstream sync to <sha>`.
+add one row for each commit with its decision. If you fix a bug that upstream still has, list it under
+"Local-only fixes", and check at each sync whether upstream fixed it too. Commit the ledger as
+`chore: record upstream sync to <sha>`.
 
 ### 6. Push
 
