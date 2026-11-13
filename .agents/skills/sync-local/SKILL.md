@@ -120,11 +120,14 @@ Never force-push `local`. Never rebase it onto `main`.
 The user runs `local` from `/Applications`, built with the production bundle ID so that it keeps
 their settings. The dev build has no Sparkle feed, so it never updates itself to 0.8.
 
+The backup goes in the git-ignored `dist/backup/` and replaces the previous one. Never write
+backups or other files to the user's home directory.
+
 ```sh
-B=~/OpenUsage-backup-$(date +%Y%m%d) && mkdir -p "$B"
+BUNDLE_ID=com.robinebers.openusage ./script/build_and_run.sh build   # recreates dist/OpenUsage.app only
+B=dist/backup && rm -rf "$B" && mkdir -p "$B"
 ditto /Applications/OpenUsage.app "$B/OpenUsage.app"
 defaults export com.robinebers.openusage "$B/com.robinebers.openusage.plist"
-BUNDLE_ID=com.robinebers.openusage ./script/build_and_run.sh build
 osascript -e 'tell application id "com.robinebers.openusage" to quit'
 # wait until no /Applications/OpenUsage.app process remains, then:
 rm -rf /Applications/OpenUsage.app && ditto dist/OpenUsage.app /Applications/OpenUsage.app
